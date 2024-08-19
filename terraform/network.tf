@@ -26,8 +26,17 @@ resource "openstack_networking_router_interface_v2" "router_interface_1" {
   subnet_id = openstack_networking_subnet_v2.subnet_1.id
 }
 
-resource "openstack_networking_port_v2" "port_1" {
-  name       = "port"
+resource "openstack_networking_port_v2" "db_port_1" {
+  name       = "db_port_1"
+  network_id = openstack_networking_network_v2.network_1.id
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.subnet_1.id
+  }
+}
+
+resource "openstack_networking_port_v2" "air_port_1" {
+  name       = "air_port_1"
   network_id = openstack_networking_network_v2.network_1.id
 
   fixed_ip {

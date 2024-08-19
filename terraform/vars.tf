@@ -28,28 +28,28 @@ variable "password" {
   type        = string
 }
 
-variable "vcpus" {
-  description = "Number of vCPUs"
-  type        = number
-  default     = 2
-}
-
-variable "ram" {
-  description = "Amount of RAM in MB"
-  type        = number
-  default     = 2048
-}
-
-variable "disk_size" {
-  description = "Size of the disk in GB"
+variable "db_disk_size" {
+  description = "Size of the disk in GB for db_1"
   type        = number
   default     = 5
 }
 
-variable "gpu" {
-  description = "Number of GPUs"
+variable "air_disk_size" {
+  description = "Size of the disk in GB for air_1"
   type        = number
-  default     = 0
+  default     = 5
+}
+
+variable "db_flavor_id" {
+  description = "Flavor ID for db_1"
+  type        = string
+  default     = "3021"
+}
+
+variable "air_flavor_id" {
+  description = "Flavor ID for air_1"
+  type        = string
+  default     = "1015"
 }
 
 variable "private_subnet_cidr" {

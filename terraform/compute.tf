@@ -13,6 +13,15 @@ data "openstack_images_image_v2" "image_1" {
   ]
 }
 
+data "openstack_images_image_v2" "image_2" {
+  name        = "Ubuntu 22.04 LTS Machine Learning 64-bit"
+  most_recent = true
+  visibility  = "public"
+  depends_on = [
+    selectel_vpc_project_v2.project_1
+  ]
+}
+
 resource "openstack_compute_instance_v2" "db_1" {
   name            = "db_1"
   flavor_id       = var.db_flavor_id
@@ -43,7 +52,7 @@ resource "openstack_compute_instance_v2" "db_1" {
 resource "openstack_blockstorage_volume_v3" "volume_db_1" {
   name                 = "boot-volume-for-server"
   size                 = var.db_disk_size
-  image_id             = data.openstack_images_image_v2.image_1.id
+  image_id             = data.openstack_images_image_v2.image_2.id
   volume_type          = "fast.ru-7a"
   availability_zone    = "ru-7a"
   enable_online_resize = true

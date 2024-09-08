@@ -1,0 +1,8 @@
+---
+postgresql_version: 15
+postgresql_user: airflow
+postgresql_password: "1234"
+postgresql_database: airflow
+postgresql_listen_addresses: "*"
+postgresql_custom_data_dir: 
+postgresql_pg_strom_enabled: true

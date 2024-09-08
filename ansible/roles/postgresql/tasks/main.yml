@@ -1,0 +1,90 @@
+---
+- name: Install PostgreSQL {{ postgresql_version }}
+  apt:
+    name: postgresql-{{ postgresql_version }}
+    state: present
+    update_cache: yes
+
+- name: Create PostgreSQL user and database
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: "{{ postgresql_user }}"
+    password: "{{ postgresql_password }}"
+    role_attr_flags: CREATEDB,LOGIN
+
+- name: Configure PostgreSQL for remote access
+  become: true
+  become_user: postgres
+  lineinfile:
+    path: /etc/postgresql{{ postgresql_version }}/main/postgresql.conf
+    regexp: '^#?listen_addresses'
+    line: "listen_addresses = '{{ postgresql_listen_addresses }}'"
+    state: present
+  notify: restart postgresql
+
+- name: Configure pg_hba.conf
+  become: true
+  become_user: postgres
+  lineinfile:
+    path: /etc/postgresql{{ postgresql_version }}/main/pg_hba.conf
+    line: "host    all             all             {{ hostvars['air01_ip']['ansible_host'] }}/32               md5"
+    insertafter: EOF
+  notify: restart postgresql
+
+- name: Change PostgreSQL data directory if custom directory is set
+  become: true
+  become_user: postgres
+  command: pg_ctlcluster {{ postgresql_version }} main stop
+  when: postgresql_custom_data_dir is defined
+
+- name: Move PostgreSQL data directory
+  become: true
+  become_user: postgres
+  command: mv /var/lib/postgresql/{{ postgresql_version }}/main "{{ postgresql_custom_data_dir }}"
+  when: postgresql_custom_data_dir is defined
+
+- name: Update PostgreSQL data directory in configuration
+  become: true
+  become_user: postgres
+  lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+    regexp: '^data_directory'
+    line: "data_directory = '{{ postgresql_custom_data_dir }}'"
+  when: postgresql_custom_data_dir is defined
+  notify: restart postgresql
+
+- name: Install dependencies for PG-Strom
+  apt:
+    name: 
+      - build-essential
+      - git
+      - postgres-server-dev-{{ postgresql_version }}
+    state: present
+  when: postgresql_pg_strom_enabled
+
+- name: Install heterodb-extra
+  apt:
+    deb: https://heterodb.github.io/swdc/deb/heterodb-extra_5.4-1_amd64.deb
+  when: postgresql_pg_strom_enabled
+
+- name: Build and install PG-Strom
+  git:
+    repo: https://github.com/heterodb/pg-strom.git
+    dest: /tmp/pg-strom
+  become: true
+  become_user: postgres
+  command:  make PG_CONFIG=/usr/lib/postgresql/{{ postgresql_version }}/bin/pg_config -j 8
+  args:
+    chdir: /tmp/pg-strom/src
+  when: postgresql_pg_strom_enabled
+  notify: restart postgresql
+
+- name: Configure PostgreSQL to load PG-Strom
+  become: true
+  become_user: postgres
+  lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+    line: "shared_preload_libraries = 'pg_strom'"
+  when: postgresql_pg_strom_enabled
+  notify: restart postgresql

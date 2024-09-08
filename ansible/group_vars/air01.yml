@@ -1,0 +1,11 @@
+---
+airflow_user: admin
+airflow_firstname: Admin
+airflow_lastname: Adminksy
+airflow_role: Admin
+airflow_email: admin@example.com
+airflow_db_host: "{{ hostvars['db01_ip']['ansible_host'] }}"
+airflow_db_port: 5432
+airflow_db_name: airflow
+airflow_db_user: airflow
+airflow_db_password: "1234"

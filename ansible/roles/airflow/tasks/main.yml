@@ -1,0 +1,47 @@
+---
+- name: Install dependencies for Airflow
+  apt:
+    name:
+      - build-essential
+      - python3-pip
+      - python3-venv
+    state: present
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    state: latest
+
+- name: Install Airflow and required packages
+  pip:
+    name:
+      - wheel
+      - psycopg2-binary
+      - apache-airflow=={{ airflow_version }}
+      - apache-airflow-providers-postgres
+
+- name: Initialize Airflow database
+  command: airflow db init
+
+- name: Configure Airflow to use PostgreSQL
+  lineinfile:
+    path: ~/airflow/airflow.cfg
+    regexp: '^sql_alchemy_conn\s*='
+    line: 'sql_alchemy_conn = postgresql+psycopg2://{{ airflow_db_user }}:{{ airflow_db_password }}@{{ airflow_db_host }}:{{ airflow_db_port }}/{{ airflow_db_name }}'
+    backrefs: yes
+
+- name: Create Airflow user
+  command: airflow users create --username {{ airflow_user }} --firstname {{ airflow_firstname }} --lastname {{ airflow_lastname }} --role {{ airflow_role }} --email {{ airflow_email }}
+
+- name: Start Airflow webserver
+  command: airflow webserver --port 8080
+  async: 300
+  poll: 0
+
+- name: Start Airflow scheduler
+  command: airflow scheduler
+  async: 300
+  poll: 0
+
+- name: Add PostgreSQL connection in Airflow
+  command: airflow connections add postgres --conn-type postgres --conn-host {{ airflow_db_host }} --conn-schema {{ airflow_db_name }} --conn-login {{ airflow_db_user }} --conn-password {{ airflow_db_password }} --conn-port {{ airflow_db_port }}
